@@ -35,6 +35,15 @@ export const demoRegistry: DemoEntry[] = [
       import("./rain-scene").then((m) => ({ default: m.RainScene }))
     ),
   },
+  {
+    id: "room-scene",
+    title: "房间 (My Room 风格)",
+    description:
+      "风格参考 Bruno Simon「My Room in 3D」与 my-room-in-3d.vercel.app：暖色墙面、木地板、书桌双屏、台灯与窗光；原创低模几何，非原项目资源。",
+    Scene: lazy(() =>
+      import("./room-scene").then((m) => ({ default: m.RoomScene }))
+    ),
+  },
 ];
 
 export function getDemoById(id: string): DemoEntry | undefined {
