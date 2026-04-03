@@ -44,6 +44,15 @@ export const demoRegistry: DemoEntry[] = [
       import("./room-scene").then((m) => ({ default: m.RoomScene }))
     ),
   },
+  {
+    id: "ray-interaction",
+    title: "射线交互 (模型选择)",
+    description:
+      "参考 docs/射线原理交互.md：基于 Raycaster 和鼠标坐标转换，对 lion / bear 模型做点击拾取，并用 Html 卡片展示信息。",
+    Scene: lazy(() =>
+      import("./ray-interaction").then((m) => ({ default: m.RayInteractionScene }))
+    ),
+  },
 ];
 
 export function getDemoById(id: string): DemoEntry | undefined {
