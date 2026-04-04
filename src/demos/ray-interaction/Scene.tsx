@@ -1,6 +1,6 @@
-import { Environment, Html, Line, OrbitControls } from "@react-three/drei";
+import { Environment, Html, Line, OrbitControls, useProgress } from "@react-three/drei";
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { paths } from "@/resources/paths";
 import Card from "./Card.tsx";
@@ -15,6 +15,30 @@ type RayHitInfo = {
   point: THREE.Vector3;
   distance: number;
 };
+
+/** 城市 / 车辆 / HDR 在 Canvas 内加载时的占位 UI（useProgress 仅能在 R3F 树内使用） */
+function RaySceneLoadingFallback() {
+  const { progress } = useProgress();
+  const pct = Math.min(100, Math.round(progress));
+
+  return (
+    <Html center className="pointer-events-none select-none">
+      <div className="flex min-w-[220px] flex-col items-center gap-3 rounded-2xl border border-sky-500/35 bg-slate-950/95 px-8 py-6 shadow-2xl shadow-sky-900/20 backdrop-blur-md">
+        <div className="text-sm font-medium tracking-wide text-sky-100">场景加载中</div>
+        <p className="text-center text-[11px] leading-relaxed text-slate-400">
+          正在加载城市与车辆模型及环境贴图…
+        </p>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-400 transition-[width] duration-200 ease-out"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <div className="font-mono text-xs tabular-nums text-sky-300/90">{pct}%</div>
+      </div>
+    </Html>
+  );
+}
 
 export function RayInteractionScene() {
   const [selected, setSelected] = useState<RayHitInfo | null>(null);
@@ -127,10 +151,9 @@ export function RayInteractionScene() {
       <hemisphereLight args={["#64748b", "#020617", 0.45]} />
       <ambientLight intensity={0.2} />
       <directionalLight position={[10, 14, 6]} intensity={1.1} color="#e5eefc" />
-      <Environment files={paths.env("hdr/022.hdr")} background blur={1} />
 
       <group position={[0, 0, 0]}>
-        {/* 地面前进提示标记：点击后相机前进 */}
+        {/* 不随 Suspense 阻塞：加载时仍可见地面引导环 */}
         <mesh
           position={[0, 0.05, 6]}
           rotation-x={-Math.PI / 2}
@@ -141,22 +164,27 @@ export function RayInteractionScene() {
           <ringGeometry args={[0.5, 0.9, 48]} />
           <meshBasicMaterial color="#38bdf8" transparent opacity={0.8} />
         </mesh>
-
-        <group
-          ref={cityRoot}
-          position={[0, 0, 0]}
-          onClick={handleClick("city")}
-          onPointerOver={handlePointerOver}
-          onPointerOut={handlePointerOut}
-        >
-          <City />
-        </group>
-
-        {/* 车辆模型：放置在城市道路上，保持与道路方向对齐 */}
-        <group position={[0, 0.01, 4]}>
-          <Card scale={0.8} />
-        </group>
       </group>
+
+      <Suspense fallback={<RaySceneLoadingFallback />}>
+        <Environment files={paths.env("hdr/022.hdr")} background blur={1} />
+
+        <group position={[0, 0, 0]}>
+          <group
+            ref={cityRoot}
+            position={[0, 0, 0]}
+            onClick={handleClick("city")}
+            onPointerOver={handlePointerOver}
+            onPointerOut={handlePointerOut}
+          >
+            <City />
+          </group>
+
+          <group position={[0, 0.01, 4]}>
+            <Card scale={0.8} />
+          </group>
+        </group>
+      </Suspense>
 
       {selected && (
         <>
