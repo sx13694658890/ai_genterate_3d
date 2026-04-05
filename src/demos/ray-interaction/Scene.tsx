@@ -5,6 +5,18 @@ import * as THREE from "three";
 import { paths } from "@/resources/paths";
 import Card from "./Card.tsx";
 import { Model as City } from "./City.tsx";
+import {
+  STRAIGHT_DRIVE_SPEED,
+  STRAIGHT_PATH_Z_MAX,
+  STRAIGHT_PATH_Z_MIN,
+  WORLD_DRIVE_DIRECTION,
+  getDriveYaw,
+  getYawForWorldForwardXZ,
+} from "./straightDrive";
+import { buildRoadTrajectory, type RoadTrajectory } from "./streetTrajectory";
+
+const CAR_GROUND_CLEARANCE = 0.02;
+const TRAJECTORY_SPAWN_HINT = new THREE.Vector3(0, 0, -12);
 
 type RayObjectId = "city";
 
@@ -54,12 +66,68 @@ export function RayInteractionScene() {
   const targetCamTarget = useRef(initialCamTarget.current.clone());
   const isMoving = useRef(false);
 
+  const cityRoot = useRef<THREE.Group>(null);
+  const carRigRef = useRef<THREE.Group>(null);
+  const driveLinearSpeedRef = useRef(STRAIGHT_DRIVE_SPEED);
+  const driveTangentRef = useRef(new THREE.Vector3(0, 0, 1));
+  const streetTrajectoryRef = useRef<RoadTrajectory | null>(null);
+  const streetPathBuiltRef = useRef(false);
+  const arcLengthAlongRef = useRef(0);
+  const samplePosRef = useRef(new THREE.Vector3());
+  const sampleTanRef = useRef(new THREE.Vector3());
+
   useEffect(() => {
     camera.position.copy(initialCamPos.current);
     camera.lookAt(initialCamTarget.current);
   }, [camera]);
 
   useFrame((_, delta) => {
+    driveLinearSpeedRef.current = STRAIGHT_DRIVE_SPEED;
+
+    const rig = carRigRef.current;
+    const city = cityRoot.current;
+
+    if (!streetPathBuiltRef.current && city) {
+      streetPathBuiltRef.current = true;
+      const traj = buildRoadTrajectory(city, { spawnHint: TRAJECTORY_SPAWN_HINT });
+      streetTrajectoryRef.current = traj;
+      if (traj && rig) {
+        arcLengthAlongRef.current = 0;
+        traj.sampleAtDistance(0, samplePosRef.current, sampleTanRef.current);
+        rig.position.copy(samplePosRef.current);
+        rig.position.y += CAR_GROUND_CLEARANCE;
+        rig.rotation.y = getYawForWorldForwardXZ(sampleTanRef.current);
+        driveTangentRef.current.copy(sampleTanRef.current);
+      }
+    }
+
+    if (rig) {
+      const traj = streetTrajectoryRef.current;
+      if (traj) {
+        arcLengthAlongRef.current += STRAIGHT_DRIVE_SPEED * delta;
+        traj.sampleAtDistance(
+          arcLengthAlongRef.current,
+          samplePosRef.current,
+          sampleTanRef.current,
+        );
+        rig.position.copy(samplePosRef.current);
+        rig.position.y += CAR_GROUND_CLEARANCE;
+        rig.rotation.y = getYawForWorldForwardXZ(sampleTanRef.current);
+        driveTangentRef.current.copy(sampleTanRef.current);
+      } else if (streetPathBuiltRef.current) {
+        const dir = WORLD_DRIVE_DIRECTION.clone();
+        dir.y = 0;
+        if (dir.lengthSq() < 1e-8) dir.set(0, 0, 1);
+        else dir.normalize();
+        rig.position.addScaledVector(dir, STRAIGHT_DRIVE_SPEED * delta);
+        if (rig.position.z > STRAIGHT_PATH_Z_MAX) {
+          rig.position.z = STRAIGHT_PATH_Z_MIN;
+        }
+        rig.rotation.y = getDriveYaw();
+        driveTangentRef.current.copy(WORLD_DRIVE_DIRECTION);
+      }
+    }
+
     // 相机平滑插值到目标位置与目标朝向，仅在“前进动画进行中”时执行
     if (isMoving.current) {
       const lerpFactor = 1 - Math.pow(0.001, delta);
@@ -99,8 +167,6 @@ export function RayInteractionScene() {
       }
     });
   });
-
-  const cityRoot = useRef<THREE.Group>(null);
 
   useEffect(() => {
     if (cityRoot.current) {
@@ -180,8 +246,13 @@ export function RayInteractionScene() {
             <City />
           </group>
 
-          <group position={[0, 0.01, 4]}>
-            <Card scale={0.8} />
+          <group ref={carRigRef} position={[0, 0, 0]}>
+            <Card
+              scale={0.8}
+              carRigRef={carRigRef}
+              driveLinearSpeedRef={driveLinearSpeedRef}
+              driveDirectionRef={driveTangentRef}
+            />
           </group>
         </group>
       </Suspense>
