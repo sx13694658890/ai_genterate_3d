@@ -2,12 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body,
-#root {
-  height: 100%;
+@layer base {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 5.5%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 5.5%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 263 70% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 6% 16%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 5% 18%;
+    --muted-foreground: 240 5% 64%;
+    --accent: 240 6% 18%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 6% 18%;
+    --input: 240 6% 18%;
+    --ring: 263 70% 58%;
+    --radius: 0.625rem;
+  }
 }
 
-body {
-  @apply m-0 bg-neutral-950 text-neutral-100 antialiased;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply m-0 bg-background text-foreground antialiased;
+  }
+}
+
+/* 案例页背景微动效（纯 CSS，低开销） */
+@keyframes demo-orbit-a {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate(8%, 6%) scale(1.08);
+    opacity: 0.5;
+  }
+}
+
+@keyframes demo-orbit-b {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.28;
+  }
+  50% {
+    transform: translate(-6%, -8%) scale(1.05);
+    opacity: 0.42;
+  }
+}
+
+.demo-bg-blob-a {
+  animation: demo-orbit-a 18s ease-in-out infinite;
+}
+
+.demo-bg-blob-b {
+  animation: demo-orbit-b 22s ease-in-out infinite;
 }
