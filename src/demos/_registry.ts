@@ -78,6 +78,16 @@ export const demoRegistry: DemoEntry[] = [
       "hai.glsl 全屏着色器；配乐在 Web Worker 合成。画布外简单「开始」层（非 drei Html），离开路由即中止并终止 Worker。",
     Scene: lazy(() => import("./hai-scene").then((m) => ({ default: m.HaiScene }))),
   },
+  {
+    id: "senlin-scene",
+    tag: "着色器",
+    title: "雨林地形 (main.glsl + senlin.glsl)",
+    description:
+      "Inigo Quilez 雨林 raymarch：地形与椭球树木、云层与反投影时间平滑；第二遍 senlin.glsl 做暗角与对比微调。半精度 ping-pong FBO。",
+    Scene: lazy(() =>
+      import("./senlin-scene").then((m) => ({ default: m.SenlinScene }))
+    ),
+  },
 ];
 
 export function getDemoById(id: string): DemoEntry | undefined {
