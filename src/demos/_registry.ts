@@ -21,6 +21,16 @@ export const demoRegistry: DemoEntry[] = [
     ),
   },
   {
+    id: "dxf-viewer",
+    tag: "CAD",
+    title: "DXF 图纸预览",
+    description:
+      "three-dxf-loader 将 DXF 转为 Three.js 实体；dxf-parser 同步解析展示实体数与 $ACADVER。含 public 样例与工程大文件切换。",
+    Scene: lazy(() =>
+      import("./dxf-viewer").then((m) => ({ default: m.DxfViewerScene }))
+    ),
+  },
+  {
     id: "example-torus",
     tag: "几何",
     title: "环面体",
@@ -86,6 +96,16 @@ export const demoRegistry: DemoEntry[] = [
       "Inigo Quilez 雨林 raymarch：地形与椭球树木、云层与反投影时间平滑；第二遍 senlin.glsl 做暗角与对比微调。半精度 ping-pong FBO。",
     Scene: lazy(() =>
       import("./senlin-scene").then((m) => ({ default: m.SenlinScene }))
+    ),
+  },
+  {
+    id: "universe-scene",
+    tag: "着色器",
+    title: "克尔-纽曼黑洞 (universe/*.glsl)",
+    description:
+      "shader_a 光线追踪 + TAA；shader_b 相机/键盘与 bloom 图集；shader_c/d 模糊；frag_img 合成。WASD 移动、RF 升降、QE 滚转，画布上拖动旋转视角。",
+    Scene: lazy(() =>
+      import("./universe-scene").then((m) => ({ default: m.UniverseScene }))
     ),
   },
 ];
